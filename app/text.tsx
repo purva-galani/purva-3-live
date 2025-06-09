@@ -40,11 +40,11 @@ const LoginScreen = () => {
     };
 
     useEffect(() => {
-        if (params?.resetPassword === 'true' && params.userId && params.secret) {
-            setResetModalVisible(true);
-            setResetUserId(params.userId as string);
-            setResetSecret(params.secret as string);
-        }
+    if (params?.resetPassword === 'true' && params.userId && params.secret) {
+        setResetModalVisible(true);
+        setResetUserId(params.userId as string);
+        setResetSecret(params.secret as string);
+    }
     }, [params]);
 
     useEffect(() => {
@@ -54,7 +54,7 @@ const LoginScreen = () => {
                 const params = new URLSearchParams(url.split('?')[1]);
                 const userId = params.get('userId');
                 const secret = params.get('secret');
-
+                
                 if (userId && secret) {
                     setResetModalVisible(true);
                     setResetUserId(userId);
@@ -65,7 +65,7 @@ const LoginScreen = () => {
 
         // Get the subscription object when adding the listener
         const subscription = Linking.addEventListener('url', handleDeepLink);
-
+        
         // Check initial URL if app was launched from a deep link
         Linking.getInitialURL().then(url => {
             if (url) handleDeepLink({ url });
@@ -77,51 +77,51 @@ const LoginScreen = () => {
         };
     }, []);
 
-    const handleLogin = async () => {
-        if (email === '' || password === '') {
-            Alert.alert('Error', 'Please fill in all fields');
-        } else if (!emailRegex.test(email)) {
-            Alert.alert('Error', 'Please enter a valid email');
-        } else if (!passwordRegex.test(password)) {
-            Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
-        } else {
+   const handleLogin = async () => {
+    if (email === '' || password === '') {
+        Alert.alert('Error', 'Please fill in all fields');
+    } else if (!emailRegex.test(email)) {
+        Alert.alert('Error', 'Please enter a valid email');
+    } else if (!passwordRegex.test(password)) {
+        Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
+    } else {
+        try {
+            // First check if there's an active session
             try {
-                // First check if there's an active session
-                try {
-                    const current = await account.get();
-                    if (current) {
-                        await account.deleteSession('current');
-                    }
-                } catch (error) {
-                    // No active session, proceed with login
+                const current = await account.get();
+                if (current) {
+                    await account.deleteSession('current');
                 }
-
-                // Create new session
-                const session = await account.createEmailPasswordSession(email, password);
-                console.log('Login Success:', session);
-
-                // Get user details
-                const user = await account.get();
-                console.log('Current user:', user);
-
-                // Check if user has admin label
-                const isAdmin = user.labels?.includes('admin');
-
-                Alert.alert('Success', `Logged in as ${email}`);
-                resetFields();
-
-                // Redirect based on admin status
-                if (isAdmin) {
-                    router.replace('/home'); // Admin dashboard
-                } else {
-                    router.replace('/userapp/home'); // User dashboard
-                }
-            } catch (error: any) {
-                console.error('Login Error:', error);
-                Alert.alert('Login Error', error?.message || 'An unknown error occurred');
+            } catch (error) {
+                // No active session, proceed with login
             }
+            
+            // Create new session
+            const session = await account.createEmailPasswordSession(email, password);
+            console.log('Login Success:', session);
+            
+            // Get user details
+            const user = await account.get();
+            console.log('Current user:', user);
+            
+            // Check if user has admin label
+            const isAdmin = user.labels?.includes('admin');
+            
+            Alert.alert('Success', `Logged in as ${email}`);
+            resetFields();
+            
+            // Redirect based on admin status
+            if (isAdmin) {
+                router.replace('/home'); // Admin dashboard
+            } else {
+                router.replace('/userapp/home'); // User dashboard
+            }
+        } catch (error: any) {
+            console.error('Login Error:', error);
+            Alert.alert('Login Error', error?.message || 'An unknown error occurred');
         }
-    };
+    }
+};
 
     const handleRegister = async () => {
         if (!username || !email || !password || !confirmPassword) {
@@ -139,24 +139,24 @@ const LoginScreen = () => {
                 resetFields();
                 setIsLogin(true);
 
-                // Check if user exists in the database (added by admin)
-                const response = await databases.listDocuments(
-                    DATABASE_ID,
-                    COLLECTION_ID,
-                    [Query.equal('email', email)]
-                );
+                  // Check if user exists in the database (added by admin)
+            const response = await databases.listDocuments(
+                DATABASE_ID, 
+                COLLECTION_ID,
+                [Query.equal('email', email)]
+            );
                 if (response.documents.length === 0) {
-                    // User not found in admin-added users
-                    await account.deleteSession('current');
-                    Alert.alert('Access Denied', 'You are not authorized to access this system');
-                    return;
-                }
+                // User not found in admin-added users
+                await account.deleteSession('current');
+                Alert.alert('Access Denied', 'You are not authorized to access this system');
+                return;
+            }
             } catch (error) {
                 Alert.alert('Registration Error', error instanceof Error ? error.message : 'An unknown error occurred');
             }
         }
-    };
-
+    };  
+    
     const handleForgotPassword = () => {
         setForgotModalVisible(true);
     };
@@ -169,12 +169,11 @@ const LoginScreen = () => {
         } else {
             try {
                 const resetUrl = 'https://cloud.appwrite.io/v1/recovery';
-
+                
                 await account.createRecovery(forgotEmail, resetUrl);
                 Alert.alert('Recovery Email Sent', `A password reset link has been sent to ${forgotEmail}. Please check your email.`);
-                setForgotEmail('');
                 setForgotModalVisible(false);
-
+                setForgotEmail('');
             } catch (error: any) {
                 console.error('Recovery Error:', error);
                 Alert.alert('Error', error?.message || 'Failed to send recovery email');
@@ -182,17 +181,17 @@ const LoginScreen = () => {
         }
     };
 
-    const  handleResetPassword = async () => {
+    const handleResetPassword = async () => {
         if (!newPassword || !resetConfirmPassword) {
             Alert.alert('Error', 'Please fill in all fields');
             return;
         }
-
+        
         if (newPassword !== resetConfirmPassword) {
             Alert.alert('Error', 'Passwords do not match');
             return;
         }
-
+        
         if (!passwordRegex.test(newPassword)) {
             Alert.alert('Error', 'Password must contain an uppercase letter, number, and special character');
             return;
@@ -202,28 +201,27 @@ const LoginScreen = () => {
             if (!resetUserId || !resetSecret) {
                 throw new Error('Invalid reset credentials');
             }
-
+            
             await account.updateRecovery(resetUserId, resetSecret, newPassword);
-
+            
             // Show success alert
             Alert.alert(
-                'Success',
+                'Success', 
                 'Your password has been reset successfully',
                 [
                     {
                         text: 'OK',
                         onPress: () => {
                             // Close modal and reset fields
+                            setResetModalVisible(false);
                             resetFields();
                             setResetUserId('');
                             setResetSecret('');
-                            setResetModalVisible(false);
-                             setResetSuccess(true);
                         }
                     }
                 ]
             );
-
+            
         } catch (error: any) {
             console.error('Password Reset Error:', error);
             Alert.alert('Error', error?.message || 'Failed to reset password');
@@ -235,7 +233,7 @@ const LoginScreen = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}
         >
-            <ScrollView
+            <ScrollView 
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled"
             >
@@ -252,7 +250,7 @@ const LoginScreen = () => {
                 <Modal transparent animationType="fade" visible={forgotModalVisible}>
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalCard}>
-                            <Text style={styles.modalTitle}>Forgot Password</Text>
+                            <Text style={styles.modalTitle}>Reset Password</Text>
                             <Text style={styles.modalSubtitle}>Enter your email to receive a recovery link</Text>
                             <TextInput
                                 style={styles.modalInput}
@@ -264,13 +262,13 @@ const LoginScreen = () => {
                                 autoCapitalize="none"
                             />
                             <View style={styles.modalButtonGroup}>
-                                <TouchableOpacity
+                                <TouchableOpacity 
                                     style={[styles.modalButton, styles.secondaryButton]}
                                     onPress={() => setForgotModalVisible(false)}
                                 >
                                     <Text style={styles.secondaryButtonText}>Cancel</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
+                                <TouchableOpacity 
                                     style={[styles.modalButton, styles.primaryButton]}
                                     onPress={handleSendOTP}
                                 >
@@ -285,7 +283,7 @@ const LoginScreen = () => {
                 <Modal transparent animationType="fade" visible={resetModalVisible}>
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalCard}>
-                            <Text style={styles.modalTitle}>Reset Password</Text>
+                            <Text style={styles.modalTitle}>Set New Password</Text>
 
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>New Password</Text>
@@ -298,7 +296,7 @@ const LoginScreen = () => {
                                         onChangeText={setNewPassword}
                                         secureTextEntry={!showNewPassword}
                                     />
-                                    <TouchableOpacity
+                                    <TouchableOpacity 
                                         style={styles.eyeIcon}
                                         onPress={() => setShowNewPassword(!showNewPassword)}
                                     >
@@ -310,7 +308,7 @@ const LoginScreen = () => {
                                     </TouchableOpacity>
                                 </View>
                             </View>
-
+                                
                             <View style={styles.inputContainer}>
                                 <Text style={styles.inputLabel}>Confirm Password</Text>
                                 <TextInput
@@ -322,17 +320,20 @@ const LoginScreen = () => {
                                     secureTextEntry={true}
                                 />
                             </View>
-
+                            
                             <View style={styles.modalButtonGroup}>
-                                <TouchableOpacity
+                                <TouchableOpacity 
                                     style={[styles.modalButton, styles.secondaryButton]}
                                     onPress={() => {
                                         setResetModalVisible(false);
+                                        resetFields();
+                                        setResetUserId('');
+                                        setResetSecret('');
                                     }}
                                 >
                                     <Text style={styles.secondaryButtonText}>Cancel</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
+                                <TouchableOpacity 
                                     style={[styles.modalButton, styles.primaryButton]}
                                     onPress={handleResetPassword}
                                 >
@@ -360,7 +361,7 @@ const LoginScreen = () => {
                             />
                         </View>
                     )}
-
+                    
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Email Address</Text>
                         <TextInput
@@ -374,31 +375,31 @@ const LoginScreen = () => {
                         />
                     </View>
 
-                    {/* Improved Password Input Section */}
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>Password</Text>
-                        <View style={styles.passwordInputContainer}>
-                            <TextInput
-                                style={styles.passwordInput}
-                                placeholder="Enter your password"
-                                placeholderTextColor="#999"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
+                {/* Improved Password Input Section */}
+                <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Password</Text>
+                    <View style={styles.passwordInputContainer}>
+                        <TextInput
+                            style={styles.passwordInput}
+                            placeholder="Enter your password"
+                            placeholderTextColor="#999"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!showPassword}
+                        />
+                        <TouchableOpacity 
+                            style={styles.eyeIcon}
+                            onPress={() => setShowPassword(!showPassword)}
+                        >
+                            <Ionicons
+                                name={showPassword ? 'eye' : 'eye-off'}
+                                size={20}
+                                color="#888"
                             />
-                            <TouchableOpacity
-                                style={styles.eyeIcon}
-                                onPress={() => setShowPassword(!showPassword)}
-                            >
-                                <Ionicons
-                                    name={showPassword ? 'eye' : 'eye-off'}
-                                    size={20}
-                                    color="#888"
-                                />
-                            </TouchableOpacity>
-                        </View>
+                        </TouchableOpacity>
                     </View>
-
+                </View>
+                    
                     {!isLogin && (
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -412,16 +413,16 @@ const LoginScreen = () => {
                             />
                         </View>
                     )}
-
+                    
                     {isLogin && (
-                        <TouchableOpacity
+                        <TouchableOpacity 
                             style={styles.forgotPasswordButton}
                             onPress={handleForgotPassword}
                         >
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                     )}
-
+                    
                     <TouchableOpacity
                         style={styles.authButton}
                         onPress={isLogin ? handleLogin : handleRegister}
@@ -430,7 +431,7 @@ const LoginScreen = () => {
                             {isLogin ? 'Sign In' : 'Sign Up'}
                         </Text>
                     </TouchableOpacity>
-
+                    
                     <View style={styles.authFooter}>
                         <Text style={styles.authFooterText}>
                             {isLogin ? "Don't have an account?" : "Already have an account?"}
